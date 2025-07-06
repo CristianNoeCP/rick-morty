@@ -1,7 +1,7 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 import path from 'path';
 import dotenv from 'dotenv';
-import { ICharacter } from '../types/character';
+import { ICharacter } from "../types/Character";
 
 dotenv.config();
 
