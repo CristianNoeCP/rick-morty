@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { SqliteAndApiCharacterRepository } from "../infrastructure/SqliteAndApiRepository";
+import { SqliteAndApiCharacterRepository } from "../infrastructure/SqliteAndApiCharacterRepository";
 import { CharactersFinder } from "../useCases/CharactersFinder";
 import { LoggerDecorator } from "../services/LoggerDecorator";
 import { DomainError, TypeErrors } from "../types/DomainError";

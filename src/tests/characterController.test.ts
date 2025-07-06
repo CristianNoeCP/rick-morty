@@ -1,146 +1,73 @@
-import { Request, Response } from 'express';
-import { getCharacters } from '../controllers/characterController';
-import { fetchCharacterByName } from '../services/rickAndMortyApi';
-import { Character } from '../db/models';
+import { ICharacterMother } from "./characterMother";
+import { CharacterRepositoryMock } from "./infrastructure/CharacterRepositoryMock";
+import { CharactersFinder } from "../useCases/CharactersFinder"; // Update the path as needed
+import { DomainError, TypeErrors } from "../types/DomainError";
+describe("CharactersFinder UseCase", () => {
+  let repository: CharacterRepositoryMock;
 
-// Mock the dependencies
-jest.mock('../services/rickAndMortyApi');
-jest.mock('../db/models', () => ({
-  Character: {
-    findAll: jest.fn(),
-    findOrCreate: jest.fn()
-  },
-  Op: {
-    like: 'like'
-  }
-}));
-
-describe('Character Controller', () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-  
   beforeEach(() => {
-    // Reset mocks
-    jest.clearAllMocks();
-    
-    // Mock request and response
-    req = {
-      query: { name: 'Rick' }
-    };
-    
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-    
-    // Mock console.log to avoid cluttering test output
-    console.log = jest.fn();
-    console.error = jest.fn();
+    repository = new CharacterRepositoryMock();
   });
-  
-  test('should return 501 Not Implemented initially', async () => {
-    await getCharacters(req as any, res as Response);
-    
-    expect(res.status).toHaveBeenCalledWith(501);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Not implemented yet' });
-  });
-  
-  // TODO: Uncomment and complete these tests as you implement the controller
 
-  /*
-  test('should return 400 if name is not provided', async () => {
-    req.query = {};
-    await getCharacters(req as any, res as Response);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Name parameter is required' });
-  });
-  
-  test('should return characters from database if available', async () => {
-    const mockCharacters = [
-      { id: 1, name: 'Rick Sanchez', species: 'Human', gender: 'Male' }
+  it("should find an existing characters", async () => {
+    const nameFilter = ICharacterMother.randomName();
+    const characters = [
+      ICharacterMother.random({ name: nameFilter }),
+      ICharacterMother.random({ name: nameFilter }),
     ];
-    
-    (Character.findAll as jest.Mock).mockResolvedValue(mockCharacters);
-    
-    await getCharacters(req as any, res as Response);
-    
-    expect(Character.findAll).toHaveBeenCalled();
-    expect(fetchCharacterByName).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockCharacters);
+    repository.returnOnSearch(characters);
+    const useCase = new CharactersFinder(repository);
+    const result = await useCase.run({ name: nameFilter });
+    expect(repository.searchMock).toHaveBeenCalled();
+    expect(result).toEqual(characters);
+    expect(result[0].name).toEqual(nameFilter);
   });
-  
-  test('should fetch from API and save to database if not in database', async () => {
-    const mockApiResults = [
-      { id: 1, name: 'Rick Sanchez', species: 'Human', gender: 'Male' }
-    ];
-    
-    (Character.findAll as jest.Mock).mockResolvedValue([]);
-    (fetchCharacterByName as jest.Mock).mockResolvedValue(mockApiResults);
-    (Character.findOrCreate as jest.Mock).mockResolvedValue([mockApiResults[0], true]);
-    
-    await getCharacters(req as any, res as Response);
-    
-    expect(Character.findAll).toHaveBeenCalled();
-    expect(fetchCharacterByName).toHaveBeenCalledWith('Rick');
-    expect(Character.findOrCreate).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockApiResults);
+  it("should find 0 characters", async () => {
+    const nameFilter = ICharacterMother.randomName();
+    const useCase = new CharactersFinder(repository);
+    const result = await useCase.run({ name: nameFilter });
+    expect(repository.searchMock).toHaveBeenCalled();
+    expect(repository.searchMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual([]);
   });
-  
-  test('should filter by species if provided', async () => {
-    req.query = { name: 'Rick', species: 'Human' };
-    
-    await getCharacters(req as any, res as Response);
-    
-    expect(Character.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        species: 'Human'
-      })
-    }));
+
+  it("should throw error if filter character name is empty", async () => {
+    const useCase = new CharactersFinder(repository);
+    try {
+      await useCase.run({ name: "" });
+      fail("Expected DomainError to be thrown");
+    } catch (error: any) {
+      expect(error).toBeInstanceOf(DomainError);
+      expect(error.message).toBe("Name is required and cannot be empty");
+      expect(error.type).toBe(TypeErrors.InvalidInput);
+    }
   });
-  
-  test('should filter by gender if provided', async () => {
-    req.query = { name: 'Rick', gender: 'Male' };
-    
-    await getCharacters(req as any, res as Response);
-    
-    expect(Character.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        gender: 'Male'
-      })
-    }));
+
+  it("should throw error if filter character gender is invalid", async () => {
+    const useCase = new CharactersFinder(repository);
+    const genderFilter = "invalid";
+    const nameFilter = ICharacterMother.randomName();
+    try {
+      await useCase.run({ name: nameFilter, gender: genderFilter });
+      fail("Expected DomainError to be thrown");
+    } catch (error: any) {
+      expect(error).toBeInstanceOf(DomainError);
+      expect(error.message).toBe(`Gender is invalid: "${genderFilter}". it should be: female, gender, unknown, genderless`)
+      expect(error.type).toBe(TypeErrors.InvalidInput);
+    }
   });
-  
-  test('should handle API errors gracefully', async () => {
-    (Character.findAll as jest.Mock).mockResolvedValue([]);
-    (fetchCharacterByName as jest.Mock).mockRejectedValue(new Error('API Error'));
-    
-    await getCharacters(req as any, res as Response);
-    
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('Error')
-    }));
+
+    it("should throw error if filter character species is invalid", async () => {
+    const useCase = new CharactersFinder(repository);
+    const speciesFilter = "";
+    const nameFilter = ICharacterMother.randomName();
+    try {
+      await useCase.run({ name: nameFilter, species: speciesFilter});
+      fail("Expected DomainError to be thrown");
+    } catch (error: any) {
+      expect(error).toBeInstanceOf(DomainError);
+      expect(error.message).toBe(`Species cannot be an empty string`)
+      expect(error.type).toBe(TypeErrors.InvalidInput);
+    }
   });
-  
-  test('should use cache for repeated requests', async () => {
-    const mockCharacters = [
-      { id: 1, name: 'Rick Sanchez', species: 'Human', gender: 'Male' }
-    ];
-    
-    (Character.findAll as jest.Mock).mockResolvedValue([]);
-    (fetchCharacterByName as jest.Mock).mockResolvedValue(mockCharacters);
-    
-    // First request
-    await getCharacters(req as any, res as Response);
-    
-    // Second request with same parameters
-    await getCharacters(req as any, res as Response);
-    
-    // fetchCharacterByName should only be called once
-    expect(fetchCharacterByName).toHaveBeenCalledTimes(1);
-  });
-  */
 });

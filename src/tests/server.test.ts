@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../app';
+import test, { describe } from 'node:test';
 
 describe('Server', () => {
   test('Root endpoint should return API information', async () => {
