@@ -11,7 +11,8 @@ import { Request, Response, NextFunction } from 'express';
  */
 const requestLogger = (req: Request, res: Response, next: NextFunction): void => {
   // TODO: Implement the logging middleware
-  console.log(`Request received: ${req.method} ${req.originalUrl}`);
+  const timestamp = new Date().toISOString();
+  console.log(`Request received - [${timestamp}] ${req.method} ${req.originalUrl}`);
   next();
 };
 
