@@ -1,9 +1,8 @@
-# Prueba Técnica Rick & Morty API (TypeScript)
+# Rick & Morty Characters API (TypeScript)
 
 ## Descripción
 
-Este template es el punto de partida para una prueba técnica de backend. El objetivo es implementar un endpoint `/characters` que busque personajes de Rick & Morty usando la API pública, persistiendo resultados en una base de datos local y agregando un sistema de caché en memoria.
-
+API RESTful desarrollada en Node.js y TypeScript que permite buscar, filtrar y almacenar personajes de la serie Rick & Morty. La API integra datos desde la API pública de Rick & Morty, almacena los resultados en una base de datos local SQLite y optimiza las consultas mediante un sistema de caché en memoria.
 
 ## Tecnologías utilizadas
 
@@ -11,49 +10,49 @@ Este template es el punto de partida para una prueba técnica de backend. El obj
 - TypeScript
 - Express
 - SQLite (con Sequelize ORM)
-- Axios para peticiones HTTP
+- Axios para peticiones HTTP externas
 - Jest y ts-jest para testing
 
 ## Estructura del proyecto
 
 ```
 /src
-  /controllers       # Controladores para manejar la lógica de negocio
-  /routes            # Definición de rutas de la API
-  /middlewares       # Middleware para logging y otras funcionalidades
-  /services          # Servicios para conectar con APIs externas
-  /db                # Configuración y modelos de la base de datos
+  /controllers       # Se encarga de la comunicacion con el cliente
+  /useCases          # Lógica de negocio de la API
+  /routes            # Definición de rutas
+  /middlewares       # Middlewares (logging, etc)
+  /services          # Servicios externos y utilidades
+  /db                # Modelos y configuración de la base de datos
   /tests             # Tests unitarios
-  /types             # Interfaces y tipos de TypeScript
+  /types             # Tipos e interfaces TypeScript
 ```
-
-## Requisitos
-
-- Node.js v18 o superior
-- npm
 
 ## Instalación
 
 1. Clona el repositorio:
-```bash
-git clone https://github.com/homecu/backend-node-test-template.git
-cd backend-test-template
-```
+
+   ```bash
+   git clone https://github.com/homecu/backend-node-test-template.git
+   cd backend-node-test-template
+   ```
 
 2. Instala las dependencias:
-```bash
-npm install
-```
 
-3. Copia el archivo de configuración:
-```bash
-cp .env.example .env
-```
+   ```bash
+   npm install
+   ```
+
+3. Copia el archivo de configuración de entorno:
+
+   ```bash
+   cp .env.example .env
+   ```
 
 4. Inicia el servidor en modo desarrollo:
-```bash
-npm run dev
-```
+
+   ```bash
+   npm run dev
+   ```
 
 ## Comandos disponibles
 
@@ -62,63 +61,42 @@ npm run dev
 - `npm run dev` - Inicia el servidor en modo desarrollo con recarga automática
 - `npm test` - Ejecuta los tests unitarios
 
-## Objetivo de la prueba
+## Uso de la API
 
-El objetivo de esta prueba técnica es implementar un endpoint `/characters` que:
+### Endpoint principal: `/characters`
 
-1. Busque personajes de Rick & Morty por nombre usando la API pública
-2. Persista los resultados en una base de datos SQLite
-3. Implemente un sistema de caché en memoria para la última consulta
-4. Utilice un middleware de logging para registrar información de cada petición
-5. Opcionalmente, agregue filtros por especie y/o género
+Permite buscar personajes por nombre y filtrar por especie y género.
 
-## Especificaciones del endpoint `/characters`
+#### Parámetros de consulta
 
-### Parámetros de consulta
+- `name` (obligatorio): Nombre del personaje a buscar.
+- `species` (opcional): Filtrar por especie.
+- `gender` (opcional): Filtrar por género.
 
-- `name` (obligatorio): Nombre del personaje a buscar
-- `species` (opcional): Filtrar por especie
-- `gender` (opcional): Filtrar por género
-
-### Ejemplo de uso
+#### Ejemplo de petición
 
 ```
 GET /characters?name=rick&species=human&gender=male
 ```
 
-### Flujo de funcionamiento
+#### Funcionamiento
 
-1. Recibir un parámetro `name` obligatorio para buscar personajes
-2. Recibir parámetros opcionales `species` y `gender` para filtrar resultados
-3. Buscar primero en la base de datos local
-4. Si no encuentra resultados, consultar la API pública y guardar los resultados
-5. Implementar un sistema de caché para optimizar consultas repetidas
-6. Retornar los resultados en formato JSON
+1. Busca primero en la base de datos local.
+2. Si no encuentra resultados, consulta la API pública y guarda los resultados localmente.
+3. Utiliza un sistema de caché en memoria para optimizar consultas repetidas.
+4. Devuelve los resultados en formato JSON.
 
-### Respuesta esperada
+#### Respuesta
 
-La API debe devolver un array de personajes que coinciden con los criterios de búsqueda, en formato JSON.
+La API retorna un array de personajes que coinciden con los criterios de búsqueda.
 
-## Archivos a modificar
+## Arquitectura y componentes
 
-Deberás implementar la funcionalidad en los siguientes archivos:
-
-- `src/controllers/characterController.ts`: Implementar la lógica del controlador para buscar y filtrar personajes
-- `src/middlewares/logger.ts`: Completar el middleware de logging para registrar información de las peticiones
-- Puedes utilizar o modificar el archivo `src/services/cache.ts` para la implementación del caché
-
-## Recursos disponibles
-
-- La API pública de Rick & Morty está disponible en: https://rickandmortyapi.com/api/character
-- Puedes usar el servicio ya implementado en `src/services/rickAndMortyApi.ts`
-- El modelo de base de datos ya está configurado en `src/db/models.ts`
-- Las rutas ya están configuradas en `src/routes/characterRoutes.ts`
-
-## Componentes a implementar
-
-1. **Controller de Characters**: Implementar la lógica para buscar personajes en la base de datos o en la API
-2. **Sistema de caché**: Implementar un mecanismo para almacenar en memoria la última consulta
-3. **Middleware de logging**: Completar el middleware para registrar información relevante de cada petición
+- **Controladores:** Gestionan la comunicación entre el cliente y la aplicación, delegan la lógica de negocio a los casos de uso y coordinan el uso del sistema de caché.
+- **Casos de uso (Use Cases):** Contienen la lógica de negocio para la búsqueda, filtrado y almacenamiento de personajes.
+- **Servicios:** Encapsulan la lógica de integración con la API pública y el sistema de caché.
+- **Middlewares:** Incluyen un middleware de logging para registrar información relevante de cada petición.
+- **Base de datos:** Persistencia local de personajes usando SQLite y Sequelize.
 
 ## Desarrollo
 
@@ -134,23 +112,10 @@ Para ejecutar el servidor en modo producción:
 npm start
 ```
 
-## Tests
+## Testing
 
-Se incluyen tests unitarios que deberás hacer pasar a medida que implementes la funcionalidad.
-
-Para ejecutar los tests:
+El proyecto incluye tests unitarios. Para ejecutarlos:
 
 ```bash
 npm test
 ```
-
-## Criterios de evaluación
-
-- Funcionalidad completa del endpoint `/characters`
-- Implementación correcta del sistema de caché
-- Implementación correcta del middleware de logging
-- Manejo adecuado de errores
-- Calidad del código
-- Tests unitarios pasando correctamente
-
-¡Buena suerte!
