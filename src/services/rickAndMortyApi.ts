@@ -3,7 +3,7 @@ import {  RickAndMortyAPIResponse, RickAndMortyCharacter } from '../types/APIRic
 import { ICharacter } from "../types/Character";
 import { filterPrimitive } from '../types/CharacterFilter';
 
-const BASE_URL = process.env.RICK_AND_MORTY_API_URL;
+const BASE_URL = process.env.RICK_AND_MORTY_API_URL
 /**
  * Fetches characters from Rick and Morty API by name
  * @param {string} name - The name to search for

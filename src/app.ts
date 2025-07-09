@@ -1,11 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { requestLogger } from './middlewares/logger';
 import characterRoutes from './routes/characterRoutes';
 import { initDatabase } from './db/models';
-import dotenv from 'dotenv';
 
-dotenv.config();
 
 // Initialize the Express application
 const app: Express = express();
